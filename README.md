@@ -10,3 +10,12 @@ mkdir $SCRAPER_DATA_DIR
 export ORDER_ID="ALL" # optionally set and order id to just fetch details of a single order
 node amazon/scraper.js
 ```
+
+# Bol
+
+```sh
+export SCRAPER_DATA_DIR="/Users/jroovers/Documents/tmp/playwright-datadir"
+mkdir $SCRAPER_DATA_DIR
+export ORDER_ID="ALL" # optionally set and order id to just fetch details of a single order
+node bol/scraper.js
+```
