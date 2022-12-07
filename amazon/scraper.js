@@ -1,5 +1,6 @@
 const playwright = require('playwright');
 const fs = require('fs');
+const readline = require('readline')
 const { exit } = require('process');
 
 // https://stackoverflow.com/a/7228322/381010 
@@ -16,19 +17,20 @@ async function main() {
 
     const userDataDir = fs.realpathSync(process.env.SCRAPER_DATA_DIR);
     let orderId = process.env.ORDER_ID || "ALL";
+    let orderYear = process.env.ORDER_YEAR || "2022";
     const baseURL = "https://www.amazon.de";
     const accountURL = `${baseURL}/gp/your-account`
 
     console.log("USER DATA DIR", userDataDir);
     console.log("ORDER ID", orderId);
-
+    console.log("ORDER YEAR", orderYear);
 
     // -------------
 
     const browser = await playwright.chromium.launchPersistentContext(userDataDir, { headless: false });
 
     const page = await browser.newPage();
-
+    await page.goto(baseURL)
 
     let fetchOrderDetails = async function (orderId) {
         // load order details
@@ -52,6 +54,19 @@ async function main() {
         });
     }
 
+    console.log("------------------------------------------------------------------")
+    console.log("The first time you run this, you will need to login to amazon")
+    console.log("------------------------------------------------------------------")
+
+    const readlineInterface = readline.createInterface({
+        input: process.stdin,
+        output: process.stdout,
+    });
+    await new Promise(resolve => readlineInterface.question("You should be logged in at this point, press any key here to continue ", answer => {
+        readlineInterface.close();
+        resolve(answer);
+    }))
+    console.log("Ok, moving on...")
 
     if (orderId === "ALL") {
 
@@ -61,7 +76,7 @@ async function main() {
         const orderIds = [];
 
         while (startIndex <= endIndex) {
-            await page.goto(`${accountURL}/order-history?opt=ab&digitalOrders=1&unifiedOrders=1&orderFilter=year-2021&startIndex=${startIndex}`);
+            await page.goto(`${accountURL}/order-history?opt=ab&digitalOrders=1&unifiedOrders=1&orderFilter=year-${orderYear}&startIndex=${startIndex}`);
 
             if (endIndex == 1000) {
                 const numOrderEl = await page.$$('.num-orders');
@@ -107,7 +122,9 @@ async function main() {
                 processOrders(i + 1)
             }
         }
-        processOrders(0)
+        await processOrders(0)
+        console.log("ALL DONE");
+
 
     } else {
         await fetchOrderDetails(orderId);
